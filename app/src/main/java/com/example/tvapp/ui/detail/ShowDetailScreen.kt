@@ -1,5 +1,7 @@
 package com.example.tvapp.ui.detail
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +13,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -25,6 +29,7 @@ import coil.compose.AsyncImage
 import com.example.tvapp.data.model.Show
 import com.example.tvapp.ui.common.ErrorState
 import com.example.tvapp.ui.common.LoadingState
+import com.example.tvapp.util.buildShareText
 import com.example.tvapp.util.seasonEpisodeSummary
 import com.example.tvapp.util.stripHtml
 
@@ -40,10 +45,23 @@ fun ShowDetailScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("Detail") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Detail") },
+                actions = {
+                    val successState = uiState as? ShowDetailUiState.Success
+                    if (successState != null) {
+                        TextButton(onClick = { shareShow(context, successState.show) }) {
+                            Text("Share")
+                        }
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
         when (val state = uiState) {
             is ShowDetailUiState.Loading -> {
@@ -66,6 +84,21 @@ fun ShowDetailScreen(
             }
         }
     }
+}
+
+/**
+ * The actual Intent/Context plumbing — deliberately thin. The text it
+ * shares comes from [buildShareText], which is the part that's covered
+ * by unit tests (this function itself needs a real Context, so it's
+ * exercised manually / via the walkthrough video instead).
+ */
+private fun shareShow(context: Context, show: Show) {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, show.name)
+        putExtra(Intent.EXTRA_TEXT, buildShareText(show))
+    }
+    context.startActivity(Intent.createChooser(sendIntent, "Share ${show.name}"))
 }
 
 @Composable
