@@ -25,6 +25,7 @@ import coil.compose.AsyncImage
 import com.example.tvapp.data.model.Show
 import com.example.tvapp.ui.common.ErrorState
 import com.example.tvapp.ui.common.LoadingState
+import com.example.tvapp.util.seasonEpisodeSummary
 import com.example.tvapp.util.stripHtml
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,6 +102,16 @@ private fun ShowDetailContent(
                 )
             }
 
+            val seasonEpisodeText = seasonEpisodeSummary(show.embedded?.episodes)
+            if (seasonEpisodeText != null) {
+                Text(
+                    text = seasonEpisodeText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+
             val summary = stripHtml(show.summary)
             if (summary.isNotBlank()) {
                 Text(
@@ -108,6 +119,16 @@ private fun ShowDetailContent(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 16.dp)
                 )
+            }
+
+            val cast = show.embedded?.cast
+            if (!cast.isNullOrEmpty()) {
+                Text(
+                    text = "Cast",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 20.dp, bottom = 8.dp)
+                )
+                CastRow(cast = cast)
             }
         }
     }

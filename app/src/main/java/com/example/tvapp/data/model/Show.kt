@@ -1,5 +1,7 @@
 package com.example.tvapp.data.model
 
+import com.google.gson.annotations.SerializedName
+
 
 data class Show(
     val id: Int,
@@ -8,5 +10,6 @@ data class Show(
     val premiered: String?,
     val rating: Rating?,
     val image: ShowImage?,
-    val summary: String?
+    val summary: String?,
+    @SerializedName("_embedded") val embedded: Embedded? = null
 )
