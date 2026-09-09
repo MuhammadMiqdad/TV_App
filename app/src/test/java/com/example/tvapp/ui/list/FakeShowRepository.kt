@@ -6,7 +6,7 @@ import java.io.IOException
 
 class FakeShowRepository(
     private val showsToReturn: List<Show> = emptyList(),
-    private val shouldThrow: Boolean = false
+    var shouldThrow: Boolean = false
 ) : ShowRepository {
 
     override suspend fun getShows(page: Int): List<Show> {
