@@ -2,23 +2,31 @@ package com.example.tvapp.ui.detail
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -28,15 +36,20 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import coil.compose.AsyncImage
 import com.example.tvapp.data.model.Show
 import com.example.tvapp.ui.common.ErrorState
+import com.example.tvapp.ui.common.InfoChip
 import com.example.tvapp.ui.common.LoadingState
 import com.example.tvapp.util.buildShareText
 import com.example.tvapp.util.seasonEpisodeSummary
 import com.example.tvapp.util.stripHtml
 
+
+private val HeroHeight = 380.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShowDetailScreen(
     showId: Int,
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ShowDetailViewModel = viewModel(
         factory = viewModelFactory {
@@ -49,17 +62,36 @@ fun ShowDetailScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Detail") },
+                title = {},
+                navigationIcon = {
+                    TextButton(onClick = onBack) {
+                        Text(
+                            text = "\u2190 Back",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                },
                 actions = {
                     val successState = uiState as? ShowDetailUiState.Success
                     if (successState != null) {
-                        TextButton(onClick = { shareShow(context, successState.show) }) {
-                            Text("Share")
+                        TextButton(
+                            onClick = { shareShow(context, successState.show) }
+                        ) {
+                            Text(
+                                text = "⤄ Share",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         }
     ) { innerPadding ->
@@ -86,21 +118,6 @@ fun ShowDetailScreen(
     }
 }
 
-/**
- * The actual Intent/Context plumbing — deliberately thin. The text it
- * shares comes from [buildShareText], which is the part that's covered
- * by unit tests (this function itself needs a real Context, so it's
- * exercised manually / via the walkthrough video instead).
- */
-private fun shareShow(context: Context, show: Show) {
-    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, show.name)
-        putExtra(Intent.EXTRA_TEXT, buildShareText(show))
-    }
-    context.startActivity(Intent.createChooser(sendIntent, "Share ${show.name}"))
-}
-
 @Composable
 private fun ShowDetailContent(
     show: Show,
@@ -111,38 +128,18 @@ private fun ShowDetailContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        AsyncImage(
-            model = show.image?.original,
-            contentDescription = show.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f)
-        )
+        HeroPoster(show = show)
 
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = show.name,
-                style = MaterialTheme.typography.headlineSmall
-            )
-
-            if (!show.premiered.isNullOrBlank()) {
-                Text(
-                    text = "Premiered: ${show.premiered}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            val seasonEpisodeText = seasonEpisodeSummary(show.embedded?.episodes)
-            if (seasonEpisodeText != null) {
-                Text(
-                    text = seasonEpisodeText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (!show.premiered.isNullOrBlank()) {
+                    InfoChip(text = "Premiered ${show.premiered}")
+                }
+                seasonEpisodeSummary(show.embedded?.episodes)?.let { summaryText ->
+                    InfoChip(text = summaryText)
+                }
             }
 
             val summary = stripHtml(show.summary)
@@ -150,19 +147,89 @@ private fun ShowDetailContent(
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 16.dp)
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 18.dp)
                 )
             }
 
             val cast = show.embedded?.cast
             if (!cast.isNullOrEmpty()) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 24.dp, bottom = 20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                )
                 Text(
                     text = "Cast",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = 20.dp, bottom = 8.dp)
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
                 CastRow(cast = cast)
             }
         }
     }
+}
+
+@Composable
+private fun HeroPoster(show: Show) {
+    val backgroundColor = MaterialTheme.colorScheme.background
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(HeroHeight)
+    ) {
+        AsyncImage(
+            model = show.image?.original,
+            contentDescription = show.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            backgroundColor.copy(alpha = 0f),
+                            backgroundColor.copy(alpha = 0.55f),
+                            backgroundColor
+                        ),
+                        startY = 0f
+                    )
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+        ) {
+            Text(
+                text = show.name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            val average = show.rating?.average
+            if (average != null) {
+                Text(
+                    text = "\u2605 $average",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun shareShow(context: Context, show: Show) {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, show.name)
+        putExtra(Intent.EXTRA_TEXT, buildShareText(show))
+    }
+    context.startActivity(Intent.createChooser(sendIntent, "Share ${show.name}"))
 }

@@ -39,7 +39,10 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument(ARG_SHOW_ID) { type = NavType.IntType })
                     ) { backStackEntry ->
                         val showId = backStackEntry.arguments?.getInt(ARG_SHOW_ID) ?: return@composable
-                        ShowDetailScreen(showId = showId)
+                        ShowDetailScreen(
+                            showId = showId,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                 }
             }
