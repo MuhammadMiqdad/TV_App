@@ -1,8 +1,9 @@
 package com.example.tvapp.ui.list
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +26,9 @@ import com.example.tvapp.data.model.Show
 import com.example.tvapp.data.model.ShowImage
 import com.example.tvapp.ui.theme.TVAppTheme
 
+private val PosterCornerRadius = 14.dp
+private val CardCornerRadius = 18.dp
+
 @Composable
 fun ShowListItem(
     show: Show,
@@ -34,38 +38,36 @@ fun ShowListItem(
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(CardCornerRadius),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = show.image?.medium,
-                contentDescription = show.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(width = 80.dp, height = 110.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
+            PosterWithRatingBadge(show = show)
 
             Column(
                 modifier = Modifier
-                    .padding(start = 12.dp)
+                    .padding(start = 14.dp)
                     .weight(1f)
             ) {
                 Text(
                     text = show.name,
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Row(
-                    modifier = Modifier.padding(top = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RatingLabel(rating = show.rating)
+                if (!show.premiered.isNullOrBlank()) {
+                    Text(
+                        text = show.premiered.take(4), // just the year — a quiet detail, not a duplicate of Detail's full date
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
                 }
             }
         }
@@ -73,17 +75,32 @@ fun ShowListItem(
 }
 
 @Composable
-private fun RowScope.RatingLabel(rating: Rating?) {
-    val average = rating?.average
-    Text(
-        text = if (average != null) "\u2605 $average" else "No rating",
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (average != null) {
-            MaterialTheme.colorScheme.onSurface
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
+private fun PosterWithRatingBadge(show: Show) {
+    Box {
+        AsyncImage(
+            model = show.image?.medium,
+            contentDescription = show.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(width = 84.dp, height = 116.dp)
+                .clip(RoundedCornerShape(PosterCornerRadius))
+        )
+
+        val average = show.rating?.average
+        if (average != null) {
+            Text(
+                text = "\u2605 $average",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(6.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(horizontal = 6.dp, vertical = 3.dp)
+            )
         }
-    )
+    }
 }
 
 @Preview(showBackground = true)
