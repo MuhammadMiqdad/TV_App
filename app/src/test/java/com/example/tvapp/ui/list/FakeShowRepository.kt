@@ -13,4 +13,8 @@ class FakeShowRepository(
         if (shouldThrow) throw IOException("Simulated network failure")
         return showsToReturn
     }
+
+    override suspend fun getShowDetail(id: Int): Show {
+        throw NotImplementedError("Not used by list screen tests")
+    }
 }

@@ -42,4 +42,21 @@ class ShowListViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ShowListUiState.Error)
     }
+
+    @Test
+    fun `retry after a failed load can recover to Success`() = runTest {
+        // Arrange: repository starts failing (simulates the initial load erroring out)
+        val fakeRepository = FakeShowRepository(showsToReturn = dummyShows, shouldThrow = true)
+        val viewModel = ShowListViewModel(repository = fakeRepository)
+        assertTrue(viewModel.uiState.value is ShowListUiState.Error)
+
+        // Act: user taps Retry, and this time the "network" succeeds
+        fakeRepository.shouldThrow = false
+        viewModel.loadShows()
+
+        // Assert
+        val state = viewModel.uiState.value
+        assertTrue(state is ShowListUiState.Success)
+        assertEquals(dummyShows, (state as ShowListUiState.Success).shows)
+    }
 }
