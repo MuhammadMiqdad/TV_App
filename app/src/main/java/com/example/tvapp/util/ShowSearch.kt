@@ -11,14 +11,7 @@ import kotlin.text.trim
  *
  * This is intentionally a pure, local (client-side) filter over the list the
  * app already loaded from GET /shows?page=0 — it does NOT call the network
- * again and does NOT change how shows are fetched. TVMaze's public API has
- * no "search within a single page" endpoint that fits this app's scope, so
- * filtering the already-fetched page locally is the correct, low-risk choice
- * here (its dedicated /search/shows endpoint searches the whole catalog, not
- * this page, and would require separate wiring outside this task's scope).
- *
- * Kept outside the ViewModel as a plain function so it can be unit tested
- * without touching coroutines, StateFlow, or the repository at all.
+ * again and does NOT change how shows are fetched.
  */
 fun filterShows(shows: List<Show>, query: String): List<Show> {
     val trimmedQuery = query.trim()

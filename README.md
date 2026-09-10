@@ -24,7 +24,7 @@ Video walkthrough: *(....)*
 
 ## How to run
 
-1. Open the project root folder (`MyApplication/`) in Android Studio.
+1. Open the project root folder (`TVApp/`) in Android Studio.
 2. Let Gradle sync, it will download Retrofit, OkHttp, Coil, and Navigation
    Compose on first sync.
 3. Run the `app` configuration on an emulator or physical device (minSdk 24).
@@ -99,10 +99,6 @@ A few decisions worth explaining:
   ~250 shows.
 - Add instrumented UI tests (not just ViewModel/unit tests) for the actual
   Compose screens.
-- Verify the `_embedded.cast` / `_embedded.episodes` response shape more
-  thoroughly against edge cases (shows with zero episodes, missing cast
-  photos), since my model assumptions were based on TVMaze's docs rather than
-  exhaustive live testing.
 - Swap the Unicode icon characters for `material-icons-core` for more
   consistent rendering across devices.
 - Add a unit test for `util/filterShows` (the search filter) — it's a pure function with no coroutines or state involved, so it'd be a quick, cheap addition I just haven't gotten to yet.
