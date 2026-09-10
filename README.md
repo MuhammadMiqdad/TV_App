@@ -14,6 +14,7 @@ Video walkthrough: *(....)*
   tags from the API stripped to plain text).
 - **Bonus**: season/episode count and cast, fetched via TVMaze's
   `?embed[]=cast&embed[]=episodes` in the same request (no extra API calls).
+- **Search**: a search field on the List screen filters the already-fetched page of shows by title, client-side (no extra network call).
 - **Share action**: shares the show's title, summary, and URL via Android's
   share sheet.
 - Three explicit UI states everywhere data is fetched: Loading, Error (with
@@ -51,7 +52,7 @@ ui/
   list/        ShowListScreen, ShowListItem, ShowListViewModel, ShowListUiState
   detail/      ShowDetailScreen, ShowDetailViewModel, ShowDetailUiState, CastRow
   common/      LoadingState, ErrorState, InfoChip (shared across screens)
-util/          stripHtml, buildShareText, seasonEpisodeSummary
+util/          stripHtml, buildShareText, seasonEpisodeSummary, filterShows
 ```
 
 A few decisions worth explaining:
@@ -78,6 +79,7 @@ A few decisions worth explaining:
 - **Icons are Unicode text (`←`, `⤄`, `★`) instead of `material-icons-core`**,
   to avoid adding an icon library dependency for just a couple of glyphs. A
   production app would likely just add the library instead.
+- **Search filters the already-fetched page locally**, instead of calling TVMaze's separate /search/shows endpoint. That endpoint searches the whole catalog rather than the single loaded page, and wiring it in would've meant a second network path, a fourth UI state, and debounced network-triggered queries — out of scope for what this task asks for. A local filter (util/filterShows) over ShowListUiState.Success keeps the three required states untouched and is trivial to unit test as a pure function.
 
 ---
 
@@ -103,6 +105,7 @@ A few decisions worth explaining:
   exhaustive live testing.
 - Swap the Unicode icon characters for `material-icons-core` for more
   consistent rendering across devices.
+- Add a unit test for `util/filterShows` (the search filter) — it's a pure function with no coroutines or state involved, so it'd be a quick, cheap addition I just haven't gotten to yet.
 
 See `AI_LOG.md` for where AI helped (and where it didn't get things fully
 right) throughout this project, and `CODE_REVIEW.md` / `REFLECTION.md` for

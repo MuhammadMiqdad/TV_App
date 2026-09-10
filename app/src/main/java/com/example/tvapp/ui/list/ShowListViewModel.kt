@@ -18,6 +18,12 @@ class ShowListViewModel(
     private val _uiState = MutableStateFlow<ShowListUiState>(ShowListUiState.Loading)
     val uiState: StateFlow<ShowListUiState> = _uiState.asStateFlow()
 
+    // Search is a purely local/UI concern: it filters the page of shows we
+    // already fetched, it never triggers a new network call and never
+    // touches _uiState's Loading/Success/Error contract above.
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     init {
         loadShows()
     }
@@ -34,5 +40,9 @@ class ShowListViewModel(
                 _uiState.value = ShowListUiState.Error(e.message ?: "Gagal memuat data. Coba lagi.")
             }
         }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
     }
 }
