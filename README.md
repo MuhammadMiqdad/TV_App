@@ -83,12 +83,9 @@ A few decisions worth explaining:
 
 ## Testing
 
-16 unit tests covering:
+5 unit tests covering:
 - `ShowListViewModel` and `ShowDetailViewModel` (success, error, and retry
   paths, using fake repositories)
-- `stripHtml` (tag removal, nested tags, null/blank input, HTML entities)
-- `buildShareText` (full text, missing url, missing summary)
-- `seasonEpisodeSummary` (counting, singular/plural labels, empty input)
 
 ## What I'd improve with more time
 
