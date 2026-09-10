@@ -2,7 +2,7 @@
 
 A simple TV show browser built with Jetpack Compose, using the [TVMaze API](https://www.tvmaze.com/api).
 
-Video walkthrough: *(....)*
+Video walkthrough: *( https://youtu.be/xUh5a7WxqBg )*
 
 ---
 
