@@ -1,0 +1,112 @@
+# TV App
+
+A simple TV show browser built with Jetpack Compose, using the [TVMaze API](https://www.tvmaze.com/api).
+
+Video walkthrough: *(....)*
+
+---
+
+## Features
+
+- **List screen**: browse ~250 shows with poster, title, and rating (handles a
+  missing rating gracefully).
+- **Detail screen**: larger poster, title, premiere date, and summary (HTML
+  tags from the API stripped to plain text).
+- **Bonus**: season/episode count and cast, fetched via TVMaze's
+  `?embed[]=cast&embed[]=episodes` in the same request (no extra API calls).
+- **Share action**: shares the show's title, summary, and URL via Android's
+  share sheet.
+- Three explicit UI states everywhere data is fetched: Loading, Error (with
+  Retry), and Success.
+
+---
+
+## How to run
+
+1. Open the project root folder (`MyApplication/`) in Android Studio.
+2. Let Gradle sync, it will download Retrofit, OkHttp, Coil, and Navigation
+   Compose on first sync.
+3. Run the `app` configuration on an emulator or physical device (minSdk 24).
+4. No API key or config needed, TVMaze's API is public.
+
+To run the unit tests: right-click `app/src/test` in Android Studio and choose
+**Run Tests**, or from the command line:
+
+```
+./gradlew test
+```
+
+---
+
+## Architecture
+
+**MVVM + Repository pattern**, split into three layers:
+
+```
+data/
+  model/       Show, Rating, ShowImage, Episode, CastMember, Person, Character, Embedded
+  network/      TvMazeApiService (Retrofit), NetworkModule (Retrofit/OkHttp singleton)
+  repository/  ShowRepository (interface), ShowRepositoryImpl
+ui/
+  list/        ShowListScreen, ShowListItem, ShowListViewModel, ShowListUiState
+  detail/      ShowDetailScreen, ShowDetailViewModel, ShowDetailUiState, CastRow
+  common/      LoadingState, ErrorState, InfoChip (shared across screens)
+util/          stripHtml, buildShareText, seasonEpisodeSummary
+```
+
+A few decisions worth explaining:
+
+- **`ShowRepository` is an interface**, not just a class, so ViewModels depend
+  on an abstraction instead of Retrofit directly. This is what makes them
+  testable with a fake repository instead of hitting the network.
+- **UI state is a sealed interface** (`Loading` / `Success` / `Error`) per
+  screen, rather than separate boolean flags. This makes invalid combinations
+  (like "loading" and "error" both true at once) impossible to represent.
+- **HTML stripping uses plain regex, not `android.text.Html`**. The Android
+  `Html` class isn't available in plain JVM unit tests without Robolectric,
+  and a regex-based stripper is simple enough for TVMaze's summary markup
+  while staying testable with plain JUnit.
+- **`ShowDetailViewModel` takes `showId` through a manual
+  `viewModelFactory { initializer { ... } }`**, rather than `SavedStateHandle`.
+  It works, but it's the pattern I'm least confident about in this project
+  (see `REFLECTION.md`, question 1).
+- **No dependency injection framework** (no Hilt/Koin). Repositories and
+  ViewModels use default constructor parameters pointing at a real
+  implementation, and tests override that parameter with a fake. This keeps
+  things simple for a project this size, but wouldn't scale well to a larger
+  app with more shared dependencies.
+- **Icons are Unicode text (`←`, `⤄`, `★`) instead of `material-icons-core`**,
+  to avoid adding an icon library dependency for just a couple of glyphs. A
+  production app would likely just add the library instead.
+
+---
+
+## Testing
+
+16 unit tests covering:
+- `ShowListViewModel` and `ShowDetailViewModel` (success, error, and retry
+  paths, using fake repositories)
+- `stripHtml` (tag removal, nested tags, null/blank input, HTML entities)
+- `buildShareText` (full text, missing url, missing summary)
+- `seasonEpisodeSummary` (counting, singular/plural labels, empty input)
+
+## What I'd improve with more time
+
+- Replace the manual `viewModelFactory` pattern with `SavedStateHandle`, or
+  introduce Hilt if the app grew beyond this scope.
+- Preserve `<b>`/`<i>` formatting in the summary as an `AnnotatedString`
+  instead of stripping all HTML to plain text.
+- Add pagination on the List screen instead of loading a single page of
+  ~250 shows.
+- Add instrumented UI tests (not just ViewModel/unit tests) for the actual
+  Compose screens.
+- Verify the `_embedded.cast` / `_embedded.episodes` response shape more
+  thoroughly against edge cases (shows with zero episodes, missing cast
+  photos), since my model assumptions were based on TVMaze's docs rather than
+  exhaustive live testing.
+- Swap the Unicode icon characters for `material-icons-core` for more
+  consistent rendering across devices.
+
+See `AI_LOG.md` for where AI helped (and where it didn't get things fully
+right) throughout this project, and `CODE_REVIEW.md` / `REFLECTION.md` for
+the rest of the take-home submission.
